@@ -34,20 +34,28 @@ class ProxyMemoryPool : public arrow::MemoryPool {
     delete tx_memory;
   }
 
-  arrow::Status Allocate(int64_t size, uint8_t **out) override {
-    return ArrowStatus(tx_memory->Allocate(size, out));
+  arrow::Status Allocate(int64_t size, int64_t alignment, uint8_t **out) override {
+    return ArrowStatus(tx_memory->Allocate(size, alignment, out));
   }
 
-  arrow::Status Reallocate(int64_t old_size, int64_t new_size, uint8_t **ptr) override {
-    return ArrowStatus(tx_memory->Reallocate(old_size, new_size, ptr));
+  arrow::Status Reallocate(int64_t old_size, int64_t new_size, int64_t alignment, uint8_t **ptr) override {
+    return ArrowStatus(tx_memory->Reallocate(old_size, new_size, alignment, ptr));
   };
 
-  void Free(uint8_t *buffer, int64_t size) override {
-    tx_memory->Free(buffer, size);
+  void Free(uint8_t *buffer, int64_t size, int64_t alignment) override {
+    tx_memory->Free(buffer, size, alignment);
   }
 
   int64_t bytes_allocated() const override {
     return this->tx_memory->bytes_allocated();
+  }
+
+  int64_t total_bytes_allocated() const override {
+    return this->tx_memory->total_bytes_allocated();
+  }
+
+  int64_t num_allocations() const override {
+    return this->tx_memory->num_allocations();
   }
 
   int64_t max_memory() const override {

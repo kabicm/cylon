@@ -96,16 +96,16 @@ message(STATUS "Arrow libs dir: " ${ARROW_LIBRARY_DIR})
 message(STATUS "Arrow include dir: " ${ARROW_INCLUDE_DIR})
 
 # find packages with the help of arrow Find*.cmake files
-find_package(Arrow REQUIRED HINTS "${ARROW_LIBRARY_DIR}/cmake/arrow" CONFIGS FindArrow.cmake)
+find_package(Arrow REQUIRED HINTS "${ARROW_LIBRARY_DIR}/cmake/Arrow" CONFIGS ArrowConfig.cmake)
 message(STATUS "Arrow lib: ${ARROW_SHARED_LIB}")
 set(ARROW_LIB ${ARROW_SHARED_LIB})
 
-find_package(Parquet REQUIRED HINTS "${ARROW_LIBRARY_DIR}/cmake/arrow" CONFIGS FindParquet.cmake)
+find_package(Parquet REQUIRED HINTS "${ARROW_LIBRARY_DIR}/cmake/Parquet" CONFIGS ParquetConfig.cmake)
 message(STATUS "Parquet lib: ${PARQUET_SHARED_LIB}")
 set(PARQUET_LIB ${PARQUET_SHARED_LIB})
 
 if (PYCYLON_BUILD)
-    find_package(arrow_python REQUIRED HINTS "${ARROW_LIBRARY_DIR}/cmake/arrow" CONFIGS FindArrowPython.cmake)
+    find_package(arrow_python REQUIRED HINTS "${ARROW_LIBRARY_DIR}/cmake/Arrow" CONFIGS FindArrowPython.cmake)
     message(STATUS "Arrow py lib: ${ARROW_PYTHON_SHARED_LIB}")
     set(ARROW_PY_LIB ${ARROW_PYTHON_SHARED_LIB})
 endif (PYCYLON_BUILD)

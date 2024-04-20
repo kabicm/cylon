@@ -30,13 +30,13 @@ class MemoryPool {
   /// Allocate a new memory region of at least size bytes.
   ///
   /// The allocated region shall be 64-byte aligned.
-  virtual Status Allocate(int64_t size, uint8_t **out) = 0;
+  virtual Status Allocate(int64_t size, int64_t alignment, uint8_t **out) = 0;
 
   /// Resize an already allocated memory section.
   ///
   /// As by default most default allocators on a platform don't support aligned
   /// reallocation, this function can involve a copy of the underlying data.
-  virtual Status Reallocate(int64_t old_size, int64_t new_size, uint8_t **ptr) = 0;
+  virtual Status Reallocate(int64_t old_size, int64_t new_size, int64_t alignment, uint8_t **ptr) = 0;
 
   /// Free an allocated region.
   ///
@@ -44,11 +44,15 @@ class MemoryPool {
   /// @param size Allocated size located at buffer. An allocator implementation
   ///   may use this for tracking the amount of allocated bytes as well as for
   ///   faster deallocation if supported by its backend.
-  virtual void Free(uint8_t *buffer, int64_t size) = 0;
+  virtual void Free(uint8_t *buffer, int64_t size, int64_t alignment) = 0;
 
   /// The number of bytes that were allocated and not yet free'd through
   /// this allocator.
   virtual int64_t bytes_allocated() const = 0;
+
+  virtual int64_t total_bytes_allocated() const = 0;
+
+  virtual int64_t num_allocations() const = 0;
 
   /// Return peak memory allocation in this memory pool
   ///
