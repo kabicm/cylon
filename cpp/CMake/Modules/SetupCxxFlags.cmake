@@ -22,7 +22,7 @@ include(CheckCXXCompilerFlag)
 message(STATUS "System processor: ${CMAKE_SYSTEM_PROCESSOR}")
 
 if(NOT DEFINED CYLON_CPU_FLAG)
-    if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
         set(CYLON_CPU_FLAG "armv8")
     elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
         set(CYLON_CPU_FLAG "armv7")
@@ -78,8 +78,8 @@ elseif(CYLON_CPU_FLAG STREQUAL "ppc")
     check_cxx_compiler_flag(${CYLON_ALTIVEC_FLAG} CXX_SUPPORTS_ALTIVEC)
 elseif(CYLON_CPU_FLAG STREQUAL "armv8")
     # Arm64 compiler flags, gcc/clang only
-    set(CYLON_ARMV8_ARCH_FLAG "-march=${CYLON_ARMV8_ARCH}")
-    check_cxx_compiler_flag(${CYLON_ARMV8_ARCH_FLAG} CXX_SUPPORTS_ARMV8_ARCH)
+    # set(CYLON_ARMV8_ARCH_FLAG "")
+    # check_cxx_compiler_flag(${CYLON_ARMV8_ARCH_FLAG} CXX_SUPPORTS_ARMV8_ARCH)
 endif()
 
 # Only enable additional instruction sets if they are supported
@@ -115,7 +115,7 @@ endif()
 
 if(CYLON_CPU_FLAG STREQUAL "armv8")
     if(NOT CXX_SUPPORTS_ARMV8_ARCH)
-        message(FATAL_ERROR "Unsupported arch flag: ${CYLON_ARMV8_ARCH_FLAG}.")
+        # message(FATAL_ERROR "Unsupported arch flag: ${CYLON_ARMV8_ARCH_FLAG}.")
     endif()
     if(CYLON_ARMV8_ARCH_FLAG MATCHES "native")
         message(FATAL_ERROR "native arch not allowed, please specify arch explicitly.")
