@@ -492,7 +492,7 @@ class ArrowNumericalHashIndexKernel : public ArrowIndexKernel {
 	const std::shared_ptr<arrow::Array> &idx_column = cylon::util::GetChunkOrEmptyArray(chunked_array, 0);
 	auto index =
 		std::make_shared<ArrowNumericHashIndex<TYPE>>(index_column, input_table->num_rows(), pool, idx_column);
-	base_arrow_index = move(index);
+	base_arrow_index = std::move(index);
 	return cylon::Status::OK();
   }
 
@@ -512,7 +512,7 @@ class ArrowBinaryHashIndexKernel : public ArrowIndexKernel {
 	const std::shared_ptr<arrow::Array> &idx_column = cylon::util::GetChunkOrEmptyArray(chunked_array, 0);
 	auto index =
 		std::make_shared<ArrowBinaryHashIndex<TYPE>>(index_column, input_table->num_rows(), pool, idx_column);
-	base_arrow_index = move(index);
+	base_arrow_index = std::move(index);
 	return cylon::Status::OK();
   }
 
