@@ -21,6 +21,9 @@
 namespace cylon {
 
 inline arrow::Status ArrowStatus(const cylon::Status &status) {
+  if (status.is_ok()) {
+    return arrow::Status::OK();
+  }
   return arrow::Status(static_cast<arrow::StatusCode>(status.get_code()), status.get_msg());
 }
 
