@@ -68,7 +68,9 @@ Status DistributedHashGroupBy(std::shared_ptr<Table> &table,
 
   if (table->GetContext()->GetWorldSize() > 1) {
     // shuffle
-    RETURN_CYLON_STATUS_IF_FAILED(Shuffle(local_table, indices_after_project, local_table));
+    if (index_cols.size() > 0) {
+        RETURN_CYLON_STATUS_IF_FAILED(Shuffle(local_table, indices_after_project, local_table));
+    }
 
     // do local distribute again
     RETURN_CYLON_STATUS_IF_FAILED(HashGroupBy(local_table,
