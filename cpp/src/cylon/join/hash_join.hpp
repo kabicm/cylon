@@ -36,10 +36,10 @@ namespace join {
  * @return
  */
 Status ArrayIndexHashJoin(const std::shared_ptr<arrow::Array> &left_idx_col,
-                                 const std::shared_ptr<arrow::Array> &right_idx_col,
-                                 config::JoinType join_type,
-                                 std::vector<int64_t> &left_table_indices,
-                                 std::vector<int64_t> &right_table_indices);
+                          const std::shared_ptr<arrow::Array> &right_idx_col,
+                          config::JoinType join_type,
+                          std::vector<int64_t> &left_table_indices,
+                          std::vector<int64_t> &right_table_indices);
 
 /**
  * Performs hash joins on two tables
@@ -51,10 +51,10 @@ Status ArrayIndexHashJoin(const std::shared_ptr<arrow::Array> &left_idx_col,
  * @return
  */
 Status HashJoin(const std::shared_ptr<arrow::Table> &ltab,
-                       const std::shared_ptr<arrow::Table> &rtab,
-                       const config::JoinConfig &config,
-                       std::shared_ptr<arrow::Table> *joined_table,
-                       arrow::MemoryPool *memory_pool);
+                const std::shared_ptr<arrow::Table> &rtab,
+                const config::JoinConfig &config,
+                std::shared_ptr<arrow::Table> *joined_table,
+                arrow::MemoryPool *memory_pool);
 
 }
 }

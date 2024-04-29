@@ -143,14 +143,20 @@ inline void calculate_metadata(cylon::join::config::JoinType join_type, int64_t 
   }
 }
 
-Status multi_index_hash_join(const std::shared_ptr<arrow::Table> &ltab,
-                             const std::shared_ptr<arrow::Table> &rtab,
+Status multi_index_hash_join(const std::shared_ptr<arrow::Table> &full_ltab,
+                             const std::shared_ptr<arrow::Table> &full_rtab,
                              const config::JoinConfig &config,
                              std::shared_ptr<arrow::Table> *joined_table,
                              arrow::MemoryPool *memory_pool) {
-  if (ltab->column(0)->num_chunks() > 1 || rtab->column(0)->num_chunks() > 1) {
+  if (full_ltab->column(0)->num_chunks() > 1 || full_rtab->column(0)->num_chunks() > 1) {
     return {Code::Invalid, "left or right table has chunked arrays"};
   }
+
+  auto left_keys = config.GetLeftColumnIdx();
+  auto right_keys = config.GetRightColumnIdx();
+
+  auto ltab = full_ltab->SelectColumns(left_keys).ValueOrDie();
+  auto rtab = full_rtab->SelectColumns(right_keys).ValueOrDie();
 
   // 2 element arrays containing [left, right] info
   const std::array<const std::shared_ptr<arrow::Table> *, 2> tabs{&ltab, &rtab};
@@ -208,12 +214,12 @@ Status multi_index_hash_join(const std::shared_ptr<arrow::Table> &ltab,
 
   // copy arrays from the table indices
   return util::build_final_table(row_indices[0], row_indices[1],
-                                 ltab, rtab, config.GetLeftTableSuffix(),
+                                 full_ltab, full_rtab, config.GetLeftTableSuffix(),
                                  config.GetRightTableSuffix(), joined_table, memory_pool);
 }
 
-Status ArrayIndexHashJoin(const std::shared_ptr<arrow::Array> &left_idx_col,
-                          const std::shared_ptr<arrow::Array> &right_idx_col,
+Status ArrayIndexHashJoin(const std::shared_ptr<arrow::Array>& left_idx_col,
+                          const std::shared_ptr<arrow::Array>& right_idx_col,
                           config::JoinType join_type,
                           std::vector<int64_t> &left_table_indices,
                           std::vector<int64_t> &right_table_indices) {
@@ -248,6 +254,7 @@ Status ArrayIndexHashJoin(const std::shared_ptr<arrow::Array> &left_idx_col,
   std::array<std::vector<uint32_t>, 2>
       hashes{std::vector<uint32_t>(build_size, 0),
              std::vector<uint32_t>(probe_size, 0)};
+
   hash_kernel->UpdateHash(*arrays[build_idx], hashes[0]); // calc hashes of left array
   hash_kernel->UpdateHash(*arrays[!build_idx], hashes[1]); // calc hashes of right array
 
@@ -309,9 +316,12 @@ Status HashJoin(const std::shared_ptr<arrow::Table> &ltab,
 
     std::vector<int64_t> left_indices, right_indices;
 
+    auto left = cylon::util::GetChunkOrEmptyArray(c_ltab->column(left_idx), 0, memory_pool);
+    auto right = cylon::util::GetChunkOrEmptyArray(c_rtab->column(right_idx), 0, memory_pool);
+
     RETURN_CYLON_STATUS_IF_FAILED(
-        ArrayIndexHashJoin(cylon::util::GetChunkOrEmptyArray(c_ltab->column(left_idx), 0),
-                           cylon::util::GetChunkOrEmptyArray(c_rtab->column(right_idx), 0),
+        ArrayIndexHashJoin(cylon::util::GetChunkOrEmptyArray(c_ltab->column(left_idx), 0, memory_pool),
+                           cylon::util::GetChunkOrEmptyArray(c_rtab->column(right_idx), 0, memory_pool),
                            config.GetType(),
                            left_indices,
                            right_indices));
