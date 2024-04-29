@@ -850,6 +850,7 @@ Status TableRowIndexHash::Make(const std::shared_ptr<arrow::Table> &table,
 
   auto hashes_ptr = std::make_shared<std::vector<uint32_t>>(len, 0);
   for (int c: col_ids) {
+    assert(table->num_columns() > c);
     std::unique_ptr<HashPartitionKernel> kernel;
     RETURN_CYLON_STATUS_IF_FAILED(CreateHashPartitionKernel(table->field(c)->type(), &kernel));
     RETURN_CYLON_STATUS_IF_FAILED(kernel->UpdateHash(table->column(c), *hashes_ptr));

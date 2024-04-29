@@ -148,6 +148,7 @@ Status multi_index_hash_join(const std::shared_ptr<arrow::Table> &full_ltab,
                              const config::JoinConfig &config,
                              std::shared_ptr<arrow::Table> *joined_table,
                              arrow::MemoryPool *memory_pool) {
+  assert(full_ltab && full_rtab);
   if (full_ltab->column(0)->num_chunks() > 1 || full_rtab->column(0)->num_chunks() > 1) {
     return {Code::Invalid, "left or right table has chunked arrays"};
   }
@@ -187,15 +188,15 @@ Status multi_index_hash_join(const std::shared_ptr<arrow::Table> &full_ltab,
   std::unique_ptr<DualTableRowIndexHash> hash;
   RETURN_CYLON_STATUS_IF_FAILED (DualTableRowIndexHash::Make(*tabs[build_idx],
                                                              *tabs[!build_idx],
-                                                             *col_indices[build_idx],
-                                                             *col_indices[!build_idx],
+                                                             //*col_indices[build_idx],
+                                                             // *col_indices[!build_idx],
                                                              &hash));
 
   std::unique_ptr<DualTableRowIndexEqualTo> equal_to;
   RETURN_CYLON_STATUS_IF_FAILED(DualTableRowIndexEqualTo::Make(*tabs[build_idx],
                                                                *tabs[!build_idx],
-                                                               *col_indices[build_idx],
-                                                               *col_indices[!build_idx],
+                                                               // *col_indices[build_idx],
+                                                               // *col_indices[!build_idx],
                                                                &equal_to));
 
   TwoTableRowIndexHashMMap hash_map((*tabs[build_idx])->num_rows(), *hash, *equal_to);
