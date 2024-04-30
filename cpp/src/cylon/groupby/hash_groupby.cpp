@@ -100,6 +100,20 @@ static Status make_groups(arrow::MemoryPool *pool,
     return Status::OK();
   }
 
+  if (idx_cols.empty()) {
+      *unique_groups = 1;
+      group_ids->reserve(num_rows);
+      arrow::Int64Builder filter_build(pool);
+      RETURN_CYLON_STATUS_IF_ARROW_FAILED((filter_build.Reserve(num_rows)));
+      filter_build.UnsafeAppend((int64_t) 0);
+
+      for (int64_t i = 0; i < num_rows; i++) {
+          group_ids->push_back((int64_t) 0);
+      }
+      RETURN_CYLON_STATUS_IF_ARROW_FAILED((filter_build.Finish(group_filter)));
+      return Status::OK();
+  }
+
   std::unique_ptr<TableRowIndexEqualTo> comp;
   RETURN_CYLON_STATUS_IF_FAILED(TableRowIndexEqualTo::Make(atable, idx_cols, &comp));
 
