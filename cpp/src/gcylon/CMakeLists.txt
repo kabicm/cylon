@@ -33,7 +33,7 @@ endif()
 
 message("CONDA_PREFIX: " $ENV{CONDA_PREFIX})
 if ((NOT DEFINED ENV{CONDA_PREFIX}) AND (NOT DEFINED ENV{CONDA_BUILD}) )
-    message(SEND_ERROR "Neither CONDA_PREFIX nor CONDA_BUILD is set. Activate conda environment or use conda-build")
+    message("Neither CONDA_PREFIX nor CONDA_BUILD is set. Activate conda environment or use conda-build")
 endif ()
 
 ## defaults to release build
