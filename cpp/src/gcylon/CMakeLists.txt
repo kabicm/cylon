@@ -57,11 +57,17 @@ if (NOT HAVE_EXCLUSIVE_SCAN)
     add_definitions(-DNEED_EXCLUSIVE_SCAN)
 endif ()
 
+set (CUDF_LIB "")
 # if conda build is used
 if("$ENV{CONDA_BUILD}" STREQUAL "1")
     set(CUDF_CUDA_INCLUDE_DIR "$ENV{BUILD_PREFIX}/include/libcudf/libcudacxx/" "$ENV{PREFIX}/include/libcudf/libcudacxx/")
+    set(CUDF_LIB cudf)
 elseif(DEFINED ENV{CONDA_PREFIX})
     set(CUDF_CUDA_INCLUDE_DIR "$ENV{CONDA_PREFIX}/include/libcudf/libcudacxx/")
+    set(CUDF_LIB cudf)
+else()
+    find_package(CUDF REQUIRED)
+    set(CUDF_LIB cudf::cudf)
 endif("$ENV{CONDA_BUILD}" STREQUAL "1")
 
 # Put the libaries and binaries that get built into directories at the top of the build.
@@ -111,7 +117,7 @@ set_target_properties(gcylon PROPERTIES VERSION ${CYLON_VERSION})
 target_link_libraries(gcylon
         ${GLOG_LIBRARIES}
         cylon
-        cudf
+        ${CUDF_LIB}
         CUDA::cudart
         ${MPI_CXX_LIBRARIES}
 )
