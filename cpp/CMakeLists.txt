@@ -241,18 +241,6 @@ if (CYLON_WITH_TEST)
 endif(CYLON_WITH_TEST)
 
 
-# if building gcylon, no need to build cylon
-option(GCYLON_BUILD "Build GCylon" OFF)
-if (GCYLON_BUILD)
-    message("GCylon build enabled")
-    add_subdirectory(src/gcylon)
-    add_subdirectory(src/examples/gcylon)
-    if (CYLON_WITH_TEST)
-        add_subdirectory(test/gcylon)
-    endif ()
-    return()
-endif ()
-
 
 if (CYLON_UCX)
     message("Cylon UCX enabled")
@@ -385,6 +373,7 @@ if (NOT ARROW_BUILD_TYPE)
 endif()
 
 if (${ARROW_BUILD_TYPE} STREQUAL "SYSTEM")
+    set(ARROW_INSTALL_NAME_RPATH OFF)
     message("Finding Arrow from SYSTEM")
     find_package(Arrow REQUIRED)
     message(STATUS "Arrow ver: ${ARROW_FULL_SO_VERSION}")
@@ -444,6 +433,18 @@ message(STATUS "Parquet lib: ${PARQUET_LIB}")
 
 add_subdirectory(src/cylon)
 add_subdirectory(src/examples)
+
+# if building gcylon, no need to build cylon
+option(GCYLON_BUILD "Build GCylon" OFF)
+if (GCYLON_BUILD)
+    message("GCylon build enabled")
+    add_subdirectory(src/gcylon)
+    add_subdirectory(src/examples/gcylon)
+    if (CYLON_WITH_TEST)
+        add_subdirectory(test/gcylon)
+    endif ()
+    return()
+endif ()
 
 include(GNUInstallDirs)
 
