@@ -144,47 +144,41 @@ cylon::Status Shuffle(std::shared_ptr<GTable> &input_table,
   return cylon::Status::OK();
 }
 
-// ref: https://github.com/rapidsai/cudf/blob/9f573016959754e3272b3b9b0f09583d0a5529a3/cpp/tests/join/join_tests.cpp#L56-L91
-// This function is a wrapper around cudf's join APIs that takes the gather map
-// from join APIs and materializes the table that would be created by gathering
-// from the joined tables. Join APIs originally returned tables like this, but
-// they were modified in https://github.com/rapidsai/cudf/pull/7454. This
-// helper function allows us to avoid rewriting all our tests in terms of
-// gather maps.
-template<std::pair<std::unique_ptr<rmm::device_uvector<cudf::size_type>>,
-                   std::unique_ptr<rmm::device_uvector<cudf::size_type>>> (*join_impl)(
-    cudf::table_view const &left_keys,
-    cudf::table_view const &right_keys,
-    cudf::null_equality compare_nulls,
-    rmm::mr::device_memory_resource *mr),
-    cudf::out_of_bounds_policy oob_policy = cudf::out_of_bounds_policy::DONT_CHECK>
+template <std::pair<std::unique_ptr<rmm::device_uvector<cudf::size_type>>,
+	 std::unique_ptr<rmm::device_uvector<cudf::size_type>>> (*join_impl)(
+			 cudf::table_view const& left_keys,
+			 cudf::table_view const& right_keys,
+			 cudf::null_equality compare_nulls,
+			 rmm::device_async_resource_ref mr),
+	cudf::out_of_bounds_policy oob_policy = cudf::out_of_bounds_policy::DONT_CHECK>
 std::unique_ptr<cudf::table> join_and_gather(
-    cudf::table_view const &left_input,
-    cudf::table_view const &right_input,
-    std::vector<cudf::size_type> const &left_on,
-    std::vector<cudf::size_type> const &right_on,
-    cudf::null_equality compare_nulls,
-    rmm::mr::device_memory_resource *mr = rmm::mr::get_current_device_resource()) {
-  auto left_selected = left_input.select(left_on);
-  auto right_selected = right_input.select(right_on);
-  auto const[left_join_indices, right_join_indices] =
-  join_impl(left_selected, right_selected, compare_nulls, mr);
+		cudf::table_view const& left_input,
+		cudf::table_view const& right_input,
+		std::vector<cudf::size_type> const& left_on,
+		std::vector<cudf::size_type> const& right_on,
+		cudf::null_equality compare_nulls,
+		rmm::device_async_resource_ref mr = rmm::mr::get_current_device_resource())
+{
+	auto left_selected  = left_input.select(left_on);
+	auto right_selected = right_input.select(right_on);
+	auto const [left_join_indices, right_join_indices] =
+		join_impl(left_selected, right_selected, compare_nulls, mr);
 
-  auto left_indices_span = cudf::device_span<cudf::size_type const>{*left_join_indices};
-  auto right_indices_span = cudf::device_span<cudf::size_type const>{*right_join_indices};
+	auto left_indices_span  = cudf::device_span<cudf::size_type const>{*left_join_indices};
+	auto right_indices_span = cudf::device_span<cudf::size_type const>{*right_join_indices};
 
-  auto left_indices_col = cudf::column_view{left_indices_span};
-  auto right_indices_col = cudf::column_view{right_indices_span};
+	auto left_indices_col  = cudf::column_view{left_indices_span};
+	auto right_indices_col = cudf::column_view{right_indices_span};
 
-  auto left_result = cudf::gather(left_input, left_indices_col, oob_policy);
-  auto right_result = cudf::gather(right_input, right_indices_col, oob_policy);
+	auto left_result  = cudf::gather(left_input, left_indices_col, oob_policy);
+	auto right_result = cudf::gather(right_input, right_indices_col, oob_policy);
 
-  auto joined_cols = left_result->release();
-  auto right_cols = right_result->release();
-  joined_cols.insert(joined_cols.end(),
-                     std::make_move_iterator(right_cols.begin()),
-                     std::make_move_iterator(right_cols.end()));
-  return std::make_unique<cudf::table>(std::move(joined_cols));
+	auto joined_cols = left_result->release();
+	auto right_cols  = right_result->release();
+	joined_cols.insert(joined_cols.end(),
+			std::make_move_iterator(right_cols.begin()),
+			std::make_move_iterator(right_cols.end()));
+	return std::make_unique<cudf::table>(std::move(joined_cols));
 }
 
 cylon::Status joinTables(const cudf::table_view &left,
@@ -340,9 +334,15 @@ cylon::Status DistributedJoin(std::shared_ptr<GTable> &left,
  */
 cylon::Status WriteToCsv(std::shared_ptr<GTable> &table, std::string output_file) {
   cudf::io::sink_info sink_info(output_file);
+  auto column_info = table->GetCudfMetadata().schema_info;
+  std::vector<std::string> column_names;
+  column_names.reserve(column_info.size());
+  for (auto& col_info : column_info) {
+    column_names.push_back(col_info.name);
+  }
   cudf::io::csv_writer_options options =
       cudf::io::csv_writer_options::builder(sink_info, table->GetCudfTable()->view())
-          .names(table->GetCudfMetadata().column_names).include_header(true);
+          .names(column_names).include_header(true);
   cudf::io::write_csv(options);
   return cylon::Status::OK();
 }
