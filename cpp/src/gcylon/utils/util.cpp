@@ -14,6 +14,7 @@
 
 #include <gcylon/utils/util.hpp>
 
+#include <cudf/utilities/type_checks.hpp>
 #include <cudf/sorting.hpp>
 #include <cudf/binaryop.hpp>
 #include <cudf/reduction.hpp>

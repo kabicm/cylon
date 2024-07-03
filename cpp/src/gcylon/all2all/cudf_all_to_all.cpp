@@ -531,7 +531,10 @@ void CudfAllToAll::constructColumn(std::shared_ptr<PendingReceives> pr) {
   std::shared_ptr<rmm::device_buffer> null_buffer = pr->null_buffer;
   std::shared_ptr<rmm::device_buffer> offsets_buffer = pr->offsets_buffer;
 
-  auto null_count = cudf::detail::null_count(static_cast<cudf::bitmask_type const*>(null_buffer->data()), 0, null_buffer->size(), rmm::cuda_stream_default);
+  int null_count = 0;
+  if (pr->has_null_buffer) {
+    null_count = cudf::detail::null_count(static_cast<cudf::bitmask_type const*>(null_buffer->data()), 0, null_buffer->size(), rmm::cuda_stream_default);
+  }
 
   if (dt.id() != cudf::type_id::STRING) {
     if (pr->has_null_buffer) {

@@ -192,7 +192,7 @@ cylon::Status gcylon::SampleTableUniform(const cudf::table_view &tv,
     return cylon::Status(cylon::Code::ExecutionError, "cudaMemcpy failed");
   }
   auto dt = cudf::data_type{cudf::type_id::INT32};
-  auto clmn = std::make_unique<cudf::column>(dt, sample_indices.size(), std::move(dev_buf));
+  auto clmn = std::make_unique<cudf::column>(dt, sample_indices.size(), std::move(dev_buf), std::move(rmm::device_buffer{0, rmm::cuda_stream_default}), 0);
   sampled_table = cudf::gather(tv, clmn->view());
 
   return cylon::Status::OK();
