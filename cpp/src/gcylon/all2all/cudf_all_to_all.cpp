@@ -16,6 +16,7 @@
 #include <cudf/table/table.hpp>
 #include <cudf/strings/strings_column_view.hpp>
 #include <cudf/null_mask.hpp>
+#include <cudf/detail/null_mask.hpp>
 #include <cudf/copying.hpp>
 #include <cudf/concatenate.hpp>
 
@@ -191,7 +192,7 @@ PartColumnView::PartColumnView(const cudf::column_view &cv, const std::vector<cu
 
 const uint8_t *PartColumnView::getDataBuffer(int part_index) {
   if (cv.type().id() == cudf::type_id::STRING) {
-    return scv->chars().data<uint8_t>() + part_char_offsets[part_index];
+    return reinterpret_cast<const uint8_t*>(scv->chars_begin(rmm::cuda_stream_default)) + part_char_offsets[part_index];
   }
 
   int start_pos = cudf::size_of(cv.type()) * part_indexes[part_index];
@@ -208,7 +209,7 @@ int PartColumnView::getDataBufferSize(int part_index) {
 
 const uint8_t *PartColumnView::getOffsetBuffer(int part_index) {
   if (cv.type().id() == cudf::type_id::STRING) {
-    return scv->offsets().data<uint8_t>() + part_indexes[part_index] * cudf::size_of(scv->offsets().type());
+    return reinterpret_cast<const uint8_t*>(scv->chars_begin(rmm::cuda_stream_default)) + part_indexes[part_index] * cudf::size_of(scv->offsets().type());
   }
 
   return nullptr;
@@ -480,8 +481,8 @@ void CudfAllToAll::makeColumnBuffers(const cudf::column_view &cw,
   int offsets_size = -1;
   if (cw.type().id() == cudf::type_id::STRING) {
     cudf::strings_column_view scv(cw);
-    data_buffer = scv.chars().data<uint8_t>();
-    buffer_size = scv.chars_size();
+    data_buffer = reinterpret_cast<const uint8_t*>(scv.chars_begin(rmm::cuda_stream_default));
+    buffer_size = scv.chars_size(rmm::cuda_stream_default);
 
     offsets_buffer = scv.offsets().data<uint8_t>();
     offsets_size = dataLength(scv.offsets());
@@ -530,21 +531,29 @@ void CudfAllToAll::constructColumn(std::shared_ptr<PendingReceives> pr) {
   std::shared_ptr<rmm::device_buffer> null_buffer = pr->null_buffer;
   std::shared_ptr<rmm::device_buffer> offsets_buffer = pr->offsets_buffer;
 
+  auto null_count = cudf::detail::null_count(static_cast<cudf::bitmask_type const*>(null_buffer->data()), 0, null_buffer->size(), rmm::cuda_stream_default);
+
   if (dt.id() != cudf::type_id::STRING) {
     if (pr->has_null_buffer) {
       column = std::make_unique<cudf::column>(dt,
                                               pr->data_size,
                                               std::move(*data_buffer),
-                                              std::move(*null_buffer));
+                                              std::move(*null_buffer),
+					      null_count
+					      );
     } else {
-      column = std::make_unique<cudf::column>(dt, pr->data_size, std::move(*data_buffer));
+      column = std::make_unique<cudf::column>(dt, 
+		                              pr->data_size, 
+					      std::move(*data_buffer), 
+					      std::move(rmm::device_buffer{0, rmm::cuda_stream_default}),
+				              0);
     }
 
     // construct string column
   } else {
     // construct chars child column
     auto cdt = cudf::data_type{cudf::type_id::INT8};
-    auto chars_column = std::make_unique<cudf::column>(cdt, pr->data_buffer_len, std::move(*data_buffer));
+    auto chars_column = std::make_unique<cudf::column>(cdt, pr->data_buffer_len, std::move(*data_buffer), std::move(rmm::device_buffer{0, rmm::cuda_stream_default}), 0);
 
     int32_t off_base = getScalar((int32_t *) offsets_buffer->data());
     if (off_base > 0) {
@@ -552,7 +561,7 @@ void CudfAllToAll::constructColumn(std::shared_ptr<PendingReceives> pr) {
     }
 
     auto odt = cudf::data_type{cudf::type_id::INT32};
-    auto offsets_column = std::make_unique<cudf::column>(odt, pr->data_size + 1, std::move(*offsets_buffer));
+    auto offsets_column = std::make_unique<cudf::column>(odt, pr->data_size + 1, std::move(*offsets_buffer), std::move(rmm::device_buffer{0, rmm::cuda_stream_default}), 0);
 
     std::vector<std::unique_ptr<cudf::column>> children;
     children.emplace_back(std::move(offsets_column));
@@ -564,7 +573,7 @@ void CudfAllToAll::constructColumn(std::shared_ptr<PendingReceives> pr) {
                                               pr->data_size,
                                               std::move(rmm_buf),
                                               std::move(*null_buffer),
-                                              cudf::UNKNOWN_NULL_COUNT,
+                                              null_count,
                                               std::move(children));
     } else {
       column = std::make_unique<cudf::column>(cudf::data_type{cudf::type_id::STRING},
