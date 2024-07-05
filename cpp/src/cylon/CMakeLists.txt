@@ -284,6 +284,7 @@ endif (PYCYLON_BUILD)
 target_compile_options(cylon PRIVATE)
 # target_compile_options(cylon PRIVATE -Werror -Wall -Wextra -Wno-unused-parameter)
 
+cylon_install_all_headers("cylon/partition")
 cylon_install_all_headers("cylon")
 
 add_subdirectory(util)

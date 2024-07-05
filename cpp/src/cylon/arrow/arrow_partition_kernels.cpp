@@ -262,7 +262,7 @@ class FixedSizeBinaryHashPartitionKernel : public HashPartitionKernel {
               idx_col,
               [&](uint64_t global_idx, std::string_view val) {
                 uint32_t hash = 0;
-                util::MurmurHash3_x86_32(&val, len, 0, &hash);
+                util::MurmurHash3_x86_32(val.data(), len, 0, &hash);
                 hash += 31 * target_partitions[global_idx];
                 uint32_t p = mod_power2(hash, num_partitions);
                 target_partitions[global_idx] = p;
@@ -278,7 +278,7 @@ class FixedSizeBinaryHashPartitionKernel : public HashPartitionKernel {
           idx_col,
           [&](uint64_t global_idx, std::string_view val) {
             uint32_t hash = 0;
-            util::MurmurHash3_x86_32(&val, len, 0, &hash);
+            util::MurmurHash3_x86_32(val.data(), len, 0, &hash);
             hash += 31 * target_partitions[global_idx];
             uint32_t p = mod(hash, num_partitions);
             target_partitions[global_idx] = p;
@@ -304,7 +304,7 @@ class FixedSizeBinaryHashPartitionKernel : public HashPartitionKernel {
         (idx_col,
          [&](uint64_t global_idx, std::string_view val) {
            uint32_t hash = 0;
-           util::MurmurHash3_x86_32(&val, byte_width, 0, &hash);
+           util::MurmurHash3_x86_32(val.data(), byte_width, 0, &hash);
            hash += 31 * partial_hashes[global_idx];
            partial_hashes[global_idx] = hash;
          },
@@ -350,7 +350,7 @@ class BinaryHashPartitionKernel : public HashPartitionKernel {
               idx_col,
               [&](uint64_t global_idx, std::string_view val) {
                 uint32_t hash = 0;
-                util::MurmurHash3_x86_32(&val, static_cast<int>(val.size()), 0, &hash);
+                util::MurmurHash3_x86_32(val.data(), static_cast<int>(val.size()), 0, &hash);
                 hash += 31 * target_partitions[global_idx];
                 uint32_t p = mod_power2(hash, num_partitions);
                 target_partitions[global_idx] = p;
@@ -367,7 +367,7 @@ class BinaryHashPartitionKernel : public HashPartitionKernel {
               idx_col,
               [&](uint64_t global_idx, std::string_view val) {
                 uint32_t hash = 0;
-                util::MurmurHash3_x86_32(&val, static_cast<int>(val.size()), 0, &hash);
+                util::MurmurHash3_x86_32(val.data(), static_cast<int>(val.size()), 0, &hash);
                 hash += 31 * target_partitions[global_idx];
                 uint32_t p = mod(hash, num_partitions);
                 target_partitions[global_idx] = p;
@@ -392,7 +392,7 @@ class BinaryHashPartitionKernel : public HashPartitionKernel {
             idx_col,
             [&](uint64_t global_idx, std::string_view val) {
               uint32_t hash = 0;
-              util::MurmurHash3_x86_32(&val, static_cast<int>(val.size()), 0, &hash);
+              util::MurmurHash3_x86_32(val.data(), static_cast<int>(val.size()), 0, &hash);
               hash += 31 * partial_hashes[global_idx];
               partial_hashes[global_idx] = hash;
             },
