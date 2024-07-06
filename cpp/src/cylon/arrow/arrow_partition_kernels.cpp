@@ -388,7 +388,7 @@ class BinaryHashPartitionKernel : public HashPartitionKernel {
     }
 
     return
-        visit_chunked_array<arrow::FixedSizeBinaryType>(
+        visit_chunked_array<ArrowT>(
             idx_col,
             [&](uint64_t global_idx, std::string_view val) {
               uint32_t hash = 0;
