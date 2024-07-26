@@ -306,6 +306,7 @@ std::unique_ptr<ArrowArraySplitKernel> CreateSplitter(const std::shared_ptr<arro
     case arrow::Type::DOUBLE:return std::make_unique<DoubleArraySplitter>(pool);
     case arrow::Type::FIXED_SIZE_BINARY:return std::make_unique<FixedBinaryArraySplitKernel>(pool);
     case arrow::Type::STRING:return std::make_unique<BinaryArraySplitKernel<arrow::StringType>>(pool);
+    case arrow::Type::LARGE_STRING:return std::make_unique<BinaryArraySplitKernel<arrow::LargeStringType>>(pool);
     case arrow::Type::BINARY:return std::make_unique<BinaryArraySplitKernel<arrow::BinaryType>>(pool);
     case arrow::Type::DATE32:return std::make_unique<ArrowArrayNumericSplitKernel<arrow::Date32Type>>(pool);
     case arrow::Type::DATE64:return std::make_unique<ArrowArrayNumericSplitKernel<arrow::Date64Type>>(pool);
